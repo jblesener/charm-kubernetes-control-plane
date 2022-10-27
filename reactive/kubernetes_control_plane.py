@@ -142,6 +142,9 @@ aws_iam_webhook = "/root/cdk/aws-iam-webhook.yaml"
 auth_webhook_root = "/root/cdk/auth-webhook"
 auth_webhook_conf = os.path.join(auth_webhook_root, "auth-webhook-conf.yaml")
 auth_webhook_exe = os.path.join(auth_webhook_root, "auth-webhook.py")
+auth_webhook_custom_ca_path = os.path.join(auth_webhook_root, "ca.crt")
+auth_webhook_custom_client_cert_path = os.path.join(auth_webhook_root, "client.crt")
+auth_webhook_custom_client_key_path = os.path.join(auth_webhook_root, "client.key")
 auth_webhook_svc_name = "cdk.master.auth-webhook"
 auth_webhook_svc = "/etc/systemd/system/{}.service".format(auth_webhook_svc_name)
 tls_ciphers_intermediate = [
@@ -1207,6 +1210,35 @@ def register_auth_webhook():
     render(
         "cdk.master.auth-webhook.logrotate", "/etc/logrotate.d/auth-webhook", context
     )
+
+    custom_authn_ssl_ca = hookenv.config("authn-webhook-endpoint-ssl-ca")
+    if custom_authn_ssl_ca:
+        host.write_file(
+            path=auth_webhook_custom_ca_path,
+            perms=0o600,
+            content=custom_authn_ssl_ca,
+        )
+        context["custom_authn_ca_cert_path"] = auth_webhook_custom_ca_path
+
+    custom_authn_ssl_client_cert = hookenv.config(
+        "authn-webhook-endpoint-ssl-client-cert")
+    if custom_authn_ssl_client_cert:
+        host.write_file(
+            path=auth_webhook_custom_client_cert_path,
+            perms=0o600,
+            content=custom_authn_ssl_client_cert,
+        )
+        context["custom_authn_client_cert_path"] = auth_webhook_custom_client_cert_path
+
+    custom_authn_ssl_client_key = hookenv.config(
+        "authn-webhook-endpoint-ssl-client_key")
+    if custom_authn_ssl_client_key:
+        host.write_file(
+            path=auth_webhook_custom_client_key_path,
+            perms=0o600,
+            content=custom_authn_ssl_client_key,
+        )
+        context["custom_authn_client_cert_path"] = auth_webhook_custom_client_key_path
 
     # Move existing log files from ${auth_webhook_root} to /var/log/kubernetes/
     for log_file in Path(auth_webhook_root).glob("auth-webhook.log*"):

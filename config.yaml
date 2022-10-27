@@ -321,6 +321,24 @@ options:
       respond with appropriate authentication details. For more info, please refer
       to the upstream documentation at
       https://kubernetes.io/docs/reference/access-authn-authz/authentication/#webhook-token-authentication
+  authn-webhook-endpoint-ssl-ca:
+    type: string
+    description: |
+      Certificate authority encoded in base64 for securing communications to the custom authentication endpoint.
+      For example: `juju config kubernetes-control-plane authn-webhook-endpoint-ssl-ca=$(base64 /path/to/ca.crt)`
+    default: ""
+  authn-webhook-endpoint-ssl-client-cert:
+    type: string
+    description: |
+      Client cert encoded in base64 for securing communications to the custom authentication endpoint.
+      For example: `juju config kubernetes-control-plane authn-webhook-endpoint-ssl-client-cert=$(base64 /path/to/client.crt)`
+    default: ""
+  authn-webhook-endpoint-ssl-client-key:
+    type: string
+    description: |
+      Client key encoded in base64 for securing communications to the custom authentication endpoint.
+      For example: `juju config kubernetes-control-plane authn-webhook-endpoint-ssl-client-key=$(base64 /path/to/client.key)`
+    default: ""
   pod-security-policy:
     type: string
     default: ""
@@ -349,10 +367,10 @@ options:
     default: true
     description: |
       Note: required if 'enable-metrics' is enabled.
-      
+
       Configuring the aggregation layer allows the Kubernetes apiserver to be extended
       with additional APIs, which are not part of the core Kubernetes APIs.
-      
+
       For more information, see the upstream Kubernetes documentation about this 
       feature:      
       https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/#enable-kubernetes-apiserver-flags

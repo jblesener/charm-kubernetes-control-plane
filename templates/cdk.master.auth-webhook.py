@@ -6,6 +6,7 @@ import logging
 import aiohttp
 import asyncio
 import signal
+import ssl
 from base64 import b64decode
 from copy import deepcopy
 from pathlib import Path
@@ -15,6 +16,9 @@ from yaml import safe_load, YAMLError
 AWS_IAM_ENDPOINT = '{{ aws_iam_endpoint if aws_iam_endpoint }}'
 KEYSTONE_ENDPOINT = '{{ keystone_endpoint if keystone_endpoint }}'
 CUSTOM_AUTHN_ENDPOINT = '{{ custom_authn_endpoint if custom_authn_endpoint }}'
+CUSTOM_AUTHN_CLIENT_CERT_PATH = '{{ custom_authn_client_cert_path if custom_authn_client_cert_path }}'
+CUSTOM_AUTHN_CLIENT_KEY_PATH = '{{ custom_authn_client_key_path if custom_authn_client_key_path }}'
+CUSTOM_AUTHN_CA_CERT_PATH = '{{ custom_authn_ca_cert_path if custom_authn_ca_cert_path }}'
 
 app = aiohttp.web.Application()
 routes = aiohttp.web.RouteTableDef()
@@ -215,8 +219,17 @@ async def forward_request(json_req, url):
     '''
     timeout = 10
     resp_text = ''
+
+    if CUSTOM_AUTHN_CA_CERT_PATH and CUSTOM_AUTHN_CLIENT_CERT_PATH and CUSTOM_AUTHN_CLIENT_KEY_PATH:
+        ssl_context = ssl.create_default_context(cadata=CUSTOM_AUTHN_CA_CERT_PATH)
+        ssl_context.load_cert_chain(
+            CUSTOM_AUTHN_CLIENT_CERT_PATH, CUSTOM_AUTHN_CLIENT_KEY_PATH)
+        ssl_connection = aiohttp.TCPConnector(ssl_context=ssl_context)
+    else:
+        ssl_connection = aiohttp.TCPConnector()
+
     try:
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(connection=ssl_connection) as session:
             try:
                 async with session.post(url, json=json_req, timeout=timeout) as resp:
                     resp_text = await resp.text()
